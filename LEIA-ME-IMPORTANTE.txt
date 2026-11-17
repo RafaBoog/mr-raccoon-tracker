@@ -1,0 +1,76 @@
+MR. RACCOON TRACKER — PACOTE PWA FINAL
+======================================
+
+Arquivos principais:
+- index.html: versão final com layout desktop no celular e zoom por pinça no dossiê.
+- manifest.webmanifest: configuração de instalação PWA.
+- sw.js: cache offline e pré-cache das 30 provas fotográficas.
+- icons/icon-192.png e icons/icon-512.png: ícone provisório do aplicativo.
+- assets/: imagens de evidência disponíveis neste pacote.
+
+IMPORTANTE SOBRE AS IMAGENS
+---------------------------
+O HTML e o service worker apontam para 30 arquivos WebP. Neste ambiente,
+só estavam disponíveis 8 imagens originais:
+- campo de tiro 1.webp
+- campo de tiro 2.webp
+- escritorio S.T.A.R.S. 1.webp
+- escritorio S.T.A.R.S. 2.webp
+- escritorio do chefe 1.webp
+- escritorio do chefe 2.webp
+- escritorio oeste 1.webp
+- escritorio oeste 2.webp
+
+As outras 22 imagens não estavam presentes nos arquivos acessíveis
+durante a montagem deste ZIP:
+- ada 1.webp
+- ada 2.webp
+- almoxarifado leste 1.webp
+- almoxarifado leste 2.webp
+- crocodilo 1.webp
+- crocodilo 2.webp
+- entrada externa 1.webp
+- entrada externa 2.webp
+- esgoto 1.webp
+- esgoto 2.webp
+- orfanato 1.webp
+- orfanato 2.webp
+- refeitorio laboratorio 1.webp
+- refeitorio laboratorio 2.webp
+- ruas de racoon 1.webp
+- ruas de racoon 2.webp
+- sala de descanso 1.webp
+- sala de descanso 2.webp
+- sala de soneca 1.webp
+- sala de soneca 2.webp
+- torre do relogio 1.webp
+- torre do relogio 2.webp
+
+Como você já tem a pasta assets completa no seu computador/GitHub:
+1. Extraia este ZIP por cima da pasta atual do projeto.
+2. Quando o Windows perguntar, permita mesclar a pasta assets.
+3. NÃO exclua nem substitua imagens antigas que não estejam neste ZIP.
+4. Confirme que assets continua contendo os 30 arquivos WebP antes do upload.
+
+ESTRUTURA ESPERADA NO GITHUB
+----------------------------
+/
+  index.html
+  manifest.webmanifest
+  sw.js
+  /assets/   (30 imagens WebP)
+  /icons/
+    icon-192.png
+    icon-512.png
+
+Depois do upload, aguarde o GitHub Pages atualizar e abra o site online.
+O service worker usa uma nova versão de cache para forçar a atualização
+do aplicativo. A primeira instalação/atualização precisa de internet para
+baixar as imagens. O cache do navegador pode ser apagado pelo sistema.
+
+ÍCONES
+------
+O ícone incluído é uma criação provisória para o Mr. Raccoon Tracker.
+Você pode substituí-lo mantendo exatamente os nomes:
+- icons/icon-192.png
+- icons/icon-512.png

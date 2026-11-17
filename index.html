@@ -2,8 +2,18 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=1024, initial-scale=1, minimum-scale=0.5, maximum-scale=3, user-scalable=yes, viewport-fit=cover">
 <title>Mr. Raccoon Tracker</title>
+<meta name="theme-color" content="#080a09">
+<meta name="description" content="Mr. Raccoon Tracker — registro de investigação e checklist dos 15 Mr. Raccoons de Resident Evil 2 Remake.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mr. Raccoon">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Special+Elite&display=swap">
 <style>
@@ -271,6 +281,58 @@ h1 .pre { display: block; font-size: 0.36em; color: var(--blood-hi); letter-spac
 .row .check { align-self: center; }
 
 /* Dossier — warm charcoal evidence sheet, continuous with the tracker */
+
+.viewer-stage {
+  touch-action: none;
+  display: block;
+  overflow: auto;
+  overscroll-behavior: contain;
+  position: relative;
+  scrollbar-color: var(--line-hi) var(--panel-2);
+}
+.viewer-image {
+  max-width: none;
+  max-height: none;
+  margin: 0 auto;
+  transform: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.zoom-controls {
+  position: sticky;
+  top: 8px;
+  z-index: 5;
+  float: right;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 8px 8px -38px 0;
+  padding: 3px;
+  border: 1px solid var(--line-hi);
+  background: rgba(8,10,9,.92);
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+}
+.zoom-btn, .zoom-level {
+  min-width: 29px;
+  height: 27px;
+  padding: 0 7px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--fg);
+  font: 12px var(--type);
+  cursor: pointer;
+}
+.zoom-level {
+  min-width: 48px;
+  color: var(--amber);
+  font-size: 9px;
+  letter-spacing: .06em;
+}
+.zoom-btn:hover, .zoom-level:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
 .viewer[hidden] { display: none; }
 .viewer {
   position: fixed;
@@ -505,7 +567,12 @@ h1 .pre { display: block; font-size: 0.36em; color: var(--blood-hi); letter-spac
       <div><div class="viewer-kicker">Dossiê fotográfico · Provas</div><div class="viewer-title" id="viewerTitle">Localização</div></div>
       <button class="viewer-close" id="viewerClose" type="button" aria-label="Fechar dossiê">FECHAR ×</button>
     </div>
-    <div class="viewer-stage">
+    <div class="viewer-stage" id="viewerStage">
+      <div class="zoom-controls" aria-label="Controles de zoom da fotografia">
+        <button class="zoom-btn" id="zoomOut" type="button" aria-label="Diminuir zoom">−</button>
+        <button class="zoom-level" id="zoomLevel" type="button" aria-label="Restaurar enquadramento">100%</button>
+        <button class="zoom-btn" id="zoomIn" type="button" aria-label="Aumentar zoom">+</button>
+      </div>
       <img class="viewer-image" id="viewerImage" alt="Evidência fotográfica ampliada">
       <div class="viewer-placeholder" id="viewerPlaceholder">PROVA AINDA NÃO CADASTRADA<br>ADICIONE O ARQUIVO À PASTA ASSETS</div>
     </div>
@@ -799,12 +866,65 @@ const viewerImage = document.getElementById('viewerImage');
 const viewerPlaceholder = document.getElementById('viewerPlaceholder');
 let viewerId = null;
 let viewerIndex = 0;
+let imageZoom = 1;
+let fittedImageSize = null;
+const viewerStage = document.getElementById('viewerStage');
+const zoomLevel = document.getElementById('zoomLevel');
+function resetImageZoom() {
+  imageZoom = 1;
+  fittedImageSize = null;
+  viewerImage.style.width = '';
+  viewerImage.style.height = '';
+  zoomLevel.textContent = '100%';
+  viewerStage.scrollTop = 0;
+  viewerStage.scrollLeft = 0;
+}
+function fitViewerImage() {
+  if (!viewerImage.naturalWidth || !viewerImage.naturalHeight) return;
+  const availableWidth = Math.max(100, viewerStage.clientWidth - 18);
+  const availableHeight = Math.max(100, viewerStage.clientHeight - 18);
+  const fit = Math.min(availableWidth / viewerImage.naturalWidth,
+                       availableHeight / viewerImage.naturalHeight, 1);
+  fittedImageSize = {
+    width: Math.round(viewerImage.naturalWidth * fit),
+    height: Math.round(viewerImage.naturalHeight * fit)
+  };
+  applyImageZoom();
+}
+function applyImageZoom() {
+  if (!fittedImageSize) return;
+  viewerImage.style.width = `${Math.round(fittedImageSize.width * imageZoom)}px`;
+  viewerImage.style.height = `${Math.round(fittedImageSize.height * imageZoom)}px`;
+  zoomLevel.textContent = `${Math.round(imageZoom * 100)}%`;
+}
+function changeImageZoom(delta) {
+  if (!fittedImageSize) return;
+  const oldWidth = viewerImage.getBoundingClientRect().width;
+  const oldHeight = viewerImage.getBoundingClientRect().height;
+  imageZoom = Math.max(1, Math.min(4, Math.round((imageZoom + delta) * 10) / 10));
+  applyImageZoom();
+  if (imageZoom > 1) {
+    viewerStage.scrollLeft += (viewerImage.getBoundingClientRect().width - oldWidth) / 2;
+    viewerStage.scrollTop += (viewerImage.getBoundingClientRect().height - oldHeight) / 2;
+  } else {
+    viewerStage.scrollTop = 0;
+    viewerStage.scrollLeft = 0;
+  }
+}
 function showViewerImage() {
   const item = RACCOONS[viewerId];
+  resetImageZoom();
   viewerPlaceholder.classList.remove('show');
   viewerImage.style.display = 'block';
-  viewerImage.onload = () => { viewerImage.style.display = 'block'; viewerPlaceholder.classList.remove('show'); };
-  viewerImage.onerror = () => { viewerImage.style.display = 'none'; viewerPlaceholder.classList.add('show'); };
+  viewerImage.onload = () => {
+    viewerImage.style.display = 'block';
+    viewerPlaceholder.classList.remove('show');
+    fitViewerImage();
+  };
+  viewerImage.onerror = () => {
+    viewerImage.style.display = 'none';
+    viewerPlaceholder.classList.add('show');
+  };
   viewerImage.src = item.images[viewerIndex];
   document.getElementById('viewerTitle').textContent = item.title;
   document.getElementById('viewerDetail').textContent = item.dossier || item.desc;
@@ -826,6 +946,83 @@ document.getElementById('list').addEventListener('click', e => {
 });
 document.getElementById('proofOne').addEventListener('click',()=>{if(viewerId){viewerIndex=0;showViewerImage();}});
 document.getElementById('proofTwo').addEventListener('click',()=>{if(viewerId){viewerIndex=1;showViewerImage();}});
+
+
+// Touch interaction: pinch-to-zoom and one-finger pan, restricted to the dossier photo.
+const activePointers = new Map();
+let pinchStartDistance = 0;
+let pinchStartZoom = 1;
+let lastPanPoint = null;
+
+function pointerDistance(a, b) {
+  const dx = a.x - b.x, dy = a.y - b.y;
+  return Math.hypot(dx, dy);
+}
+viewerStage.addEventListener('pointerdown', e => {
+  if (e.pointerType !== 'touch') return;
+  e.preventDefault();
+  viewerStage.setPointerCapture?.(e.pointerId);
+  activePointers.set(e.pointerId, {x: e.clientX, y: e.clientY});
+  if (activePointers.size === 2) {
+    const pts = [...activePointers.values()];
+    pinchStartDistance = pointerDistance(pts[0], pts[1]);
+    pinchStartZoom = imageZoom;
+    lastPanPoint = null;
+  } else if (activePointers.size === 1) {
+    lastPanPoint = {x: e.clientX, y: e.clientY};
+  }
+});
+viewerStage.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'touch' || !activePointers.has(e.pointerId)) return;
+  e.preventDefault();
+  activePointers.set(e.pointerId, {x: e.clientX, y: e.clientY});
+  if (activePointers.size >= 2) {
+    const pts = [...activePointers.values()];
+    const distance = pointerDistance(pts[0], pts[1]);
+    if (pinchStartDistance > 0) {
+      const nextZoom = Math.max(1, Math.min(4, pinchStartZoom * distance / pinchStartDistance));
+      imageZoom = nextZoom;
+      applyImageZoom();
+    }
+  } else if (activePointers.size === 1 && imageZoom > 1 && lastPanPoint) {
+    const dx = e.clientX - lastPanPoint.x;
+    const dy = e.clientY - lastPanPoint.y;
+    viewerStage.scrollLeft -= dx;
+    viewerStage.scrollTop -= dy;
+    lastPanPoint = {x: e.clientX, y: e.clientY};
+  }
+});
+function finishTouchPointer(e) {
+  if (activePointers.has(e.pointerId)) activePointers.delete(e.pointerId);
+  if (activePointers.size < 2) pinchStartDistance = 0;
+  if (activePointers.size === 1) {
+    const p = [...activePointers.values()][0];
+    lastPanPoint = {x: p.x, y: p.y};
+  } else {
+    lastPanPoint = null;
+  }
+}
+viewerStage.addEventListener('pointerup', finishTouchPointer);
+viewerStage.addEventListener('pointercancel', finishTouchPointer);
+viewerStage.addEventListener('lostpointercapture', finishTouchPointer);
+
+document.getElementById('zoomIn').addEventListener('click', () => changeImageZoom(0.25));
+document.getElementById('zoomOut').addEventListener('click', () => changeImageZoom(-0.25));
+document.getElementById('zoomLevel').addEventListener('click', resetImageZoom);
+viewerStage.addEventListener('wheel', e => {
+  if (!viewerId || !e.ctrlKey) return;
+  e.preventDefault();
+  changeImageZoom(e.deltaY < 0 ? 0.25 : -0.25);
+}, { passive: false });
+window.addEventListener('resize', () => {
+  if (!viewer.hidden && viewerImage.complete && viewerImage.naturalWidth) {
+    const previousZoom = imageZoom;
+    fitViewerImage();
+    imageZoom = previousZoom;
+    applyImageZoom();
+  }
+});
+
 document.getElementById('viewerClose').addEventListener('click',closeViewer);
 viewer.addEventListener('click',e=>{if(e.target===viewer)closeViewer();});
 document.addEventListener('keydown',e=>{if(viewer.hidden)return;if(e.key==='Escape')closeViewer();if(e.key==='ArrowLeft'){viewerIndex=0;showViewerImage();}if(e.key==='ArrowRight'){viewerIndex=1;showViewerImage();}});
@@ -833,6 +1030,15 @@ document.addEventListener('keydown',e=>{if(viewer.hidden)return;if(e.key==='Esca
 load();
 route();
 renderAll();
+
+// PWA: registra o service worker para habilitar instalação e uso offline.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
+      .catch(error => console.warn('Não foi possível registrar o modo offline:', error));
+  });
+}
+
 </script>
 
 </html>
