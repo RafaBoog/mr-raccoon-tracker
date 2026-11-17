@@ -860,6 +860,63 @@ body {
   .zoom-dial-face::after { left:19px; top:19px; width:18px; height:18px; }
 }
 
+
+/* Refinamento de ocupação: margens equilibradas e evidências proporcionais. */
+body { padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
+.wrap { width:100%; max-width:none; }
+@media (max-width:650px) {
+  body { padding: 12px 12px 20px; }
+  .wrap { max-width:none; gap:16px; }
+  .row {
+    grid-template-columns: 38px minmax(0,1fr) 188px;
+    gap:9px;
+    padding:13px 10px 13px 9px;
+    align-items:center;
+  }
+  .num { font-size:38px; }
+  .photo-evidence { width:188px; gap:16px; }
+  .photo-stack { width:132px; height:88px; flex-basis:132px; }
+  .photo-controls { width:40px; flex-basis:40px; gap:7px; }
+  .found-control, .found-control .check { width:38px; height:36px; flex-basis:38px; }
+  .found-control .check::after { width:17px; height:17px; }
+  .dossier-open { width:38px; height:36px; }
+  .dossier-open svg { width:19px; height:19px; }
+  .viewer { padding:8px 12px; }
+  .viewer-panel { width:100%; max-width:none; padding:10px; gap:10px; }
+  .dossier-report { grid-template-columns:minmax(0,1fr); gap:12px; padding:12px; }
+  .report-control-stack {
+    width:100%;
+    grid-template-columns:minmax(110px, 1fr) 92px;
+    grid-template-rows:auto auto;
+    column-gap:14px;
+    row-gap:8px;
+    padding-top:10px;
+  }
+  .control-caption { grid-column:1 / -1; font-size:8px; }
+  .proof-tabs { width:100%; gap:6px; }
+  .proof-tab { min-height:36px; padding:5px 9px; font-size:9px; letter-spacing:.06em; }
+  .zoom-controls { min-height:94px; gap:5px; align-items:center; justify-content:center; }
+  .zoom-dial { width:82px; height:82px; flex-basis:82px; }
+  .zoom-dial::before { inset:8px; }
+  .zoom-dial-face::before { left:38px; top:8px; width:4px; height:13px; }
+  .zoom-dial-face::after { left:27px; top:27px; width:24px; height:24px; }
+  .zoom-level { font-size:12px; }
+}
+@media (max-width:420px) {
+  .row { grid-template-columns:34px minmax(0,1fr) 170px; gap:7px; padding:11px 8px; }
+  .photo-evidence { width:170px; gap:12px; }
+  .photo-stack { width:120px; height:82px; flex-basis:120px; }
+  .photo-controls { width:38px; flex-basis:38px; }
+  .found-control, .found-control .check, .dossier-open { width:36px; height:34px; flex-basis:36px; }
+  .num { font-size:35px; }
+  .title { font-size:18px; }
+  .desc { font-size:12px; }
+  .report-control-stack { grid-template-columns:minmax(100px,1fr) 88px; column-gap:10px; }
+  .zoom-dial { width:76px; height:76px; flex-basis:76px; }
+  .zoom-dial-face::before { left:35px; top:7px; }
+  .zoom-dial-face::after { left:25px; top:25px; width:22px; height:22px; }
+}
+
 </style>
 </head>
 
