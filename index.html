@@ -98,10 +98,11 @@ h1 .pre { display: block; font-size: 0.36em; color: var(--blood-hi); letter-spac
 .vault { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
 @media (max-width: 520px) { .vault { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .cell { border: 1px solid var(--line); background: var(--bg); padding: 8px; display: flex; flex-direction: column; gap: 2px; min-width: 0; transition: all 0.2s; }
+.cell-head { display:flex; align-items:flex-start; justify-content:space-between; gap:5px; min-width:0; }
 .cell .n { font-family: var(--display); font-weight: 700; font-size: 30px; line-height: 1; color: var(--line-hi); font-variant-numeric: tabular-nums; }
 .cell .s { font-family: var(--type); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); overflow-wrap: anywhere; }
-.cell .w { display: flex; gap: 4px; margin-top: 5px; }
-.cell .w i { font-style: normal; font-family: var(--type); font-size: 10.5px; border: 1px solid var(--line); color: var(--line-hi); padding: 0 5px; }
+.cell .w { display: flex; flex-direction:column; gap: 3px; margin-top: 0; flex:0 0 auto; align-items:stretch; }
+.cell .w i { font-style: normal; font-family: var(--type); font-size: 10.5px; line-height:1.25; text-align:center; border: 1px solid var(--line); color: var(--line-hi); padding: 0 5px; min-width:18px; }
 .cell.on .w i { border-color: var(--herb); color: var(--herb); }
 .cell.on { border-color: var(--herb); background: rgba(116, 178, 97, 0.12); }
 .cell.on .n { color: var(--herb); }
@@ -792,12 +793,13 @@ h1 .pre { display: block; font-size: 0.36em; color: var(--blood-hi); letter-spac
   .chips { gap:5px; margin-top:12px; }
   .chip { font-size:9px; padding:3px 6px; letter-spacing:.06em; }
   .photo-evidence {
-    width:100%;
+    width:calc(100% - 8px);
     min-width:0;
+    margin-right:8px;
     display:grid;
     grid-template-columns:minmax(0,1fr);
     grid-template-rows:auto auto;
-    gap:8px;
+    gap:10px;
     align-content:center;
     justify-items:stretch;
   }
@@ -812,20 +814,21 @@ h1 .pre { display: block; font-size: 0.36em; color: var(--blood-hi); letter-spac
     width:100%;
     flex:none;
     display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-template-columns:repeat(2,minmax(0,44px));
+    justify-content:center;
     gap:10px;
     align-items:stretch;
   }
   .dossier-open, .found-control, .found-control .check {
-    width:100%;
-    height:46px;
-    min-height:46px;
+    width:44px;
+    height:42px;
+    min-height:42px;
     flex:none;
     align-self:stretch;
   }
-  .dossier-open svg { width:24px; height:24px; }
-  .found-control .check { width:100%; height:46px; }
-  .found-control .check::after { width:18px; height:18px; }
+  .dossier-open svg { width:21px; height:21px; }
+  .found-control .check { width:44px; height:42px; }
+  .found-control .check::after { width:16px; height:16px; }
   .viewer { padding:12px; }
   .viewer-panel { width:100%; max-width:none; padding:10px; }
 }
@@ -836,9 +839,10 @@ h1 .pre { display: block; font-size: 0.36em; color: var(--blood-hi); letter-spac
   .num { font-size:42px; }
   .title { font-size:17px; }
   .desc { font-size:12px; }
-  .photo-controls { gap:6px; }
-  .dossier-open, .found-control, .found-control .check { height:40px; min-height:40px; }
-  .found-control .check { height:40px; }
+  .photo-evidence { width:calc(100% - 10px); margin-right:10px; }
+  .photo-controls { gap:8px; grid-template-columns:repeat(2,42px); }
+  .dossier-open, .found-control, .found-control .check { width:42px; height:40px; min-height:40px; }
+  .found-control .check { width:42px; height:40px; }
 }
 
 </style>
@@ -1099,9 +1103,11 @@ function renderSummary() {
     const letters = ['L', 'C'].filter(ch => canFind(ch, id))
       .map(ch => `<i>${ch}</i>`).join('');
     return `<div class="cell${on ? ' on' : ''}${!on && !inJourney.includes(id) ? ' off' : ''}">
-      <span class="n">${String(i + 1).padStart(2, '0')}</span>
+      <span class="cell-head">
+        <span class="n">${String(i + 1).padStart(2, '0')}</span>
+        <span class="w">${letters}</span>
+      </span>
       <span class="s">${r.short}</span>
-      <span class="w">${letters}</span>
     </div>`;
   }).join('');
 }
