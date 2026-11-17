@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=3, user-scalable=yes, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mr. Raccoon Tracker</title>
 <meta name="theme-color" content="#080a09">
 <meta name="description" content="Mr. Raccoon Tracker — registro de investigação e checklist dos 15 Mr. Raccoons de Resident Evil 2 Remake.">
@@ -48,8 +48,8 @@ body {
   font-size: 16px;
   line-height: 1.45;
   padding-block: 26px 60px;
-  padding-left: max(8px, env(safe-area-inset-left, 0px));
-  padding-right: max(8px, env(safe-area-inset-right, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 /* film grain and a dark vignette, above the page, never intercepting clicks */
 body::after {
@@ -96,7 +96,7 @@ h1 .pre { display: block; font-size: 0.36em; color: var(--blood-hi); letter-spac
 .ecg.danger .live { animation-duration: 1.4s; }
 
 .vault { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
-@media (max-width: 520px) { .vault { grid-template-columns: repeat(5, minmax(0, 1fr)); } .cell { padding: 5px 4px; } .cell .n { font-size: clamp(17px, 4.2vw, 30px); } .cell .s, .cell .w i { font-size: clamp(7px, 1.45vw, 10.5px); } }
+@media (max-width: 520px) { .vault { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .cell { border: 1px solid var(--line); background: var(--bg); padding: 8px; display: flex; flex-direction: column; gap: 2px; min-width: 0; transition: all 0.2s; }
 .cell .n { font-family: var(--display); font-weight: 700; font-size: 30px; line-height: 1; color: var(--line-hi); font-variant-numeric: tabular-nums; }
 .cell .s { font-family: var(--type); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); overflow-wrap: anywhere; }
@@ -296,18 +296,18 @@ h1 .pre { display: block; font-size: 0.36em; color: var(--blood-hi); letter-spac
   z-index: 100;
   display: grid;
   place-items: center;
-  padding: 8px;
+  padding: 20px;
   background: rgba(5,8,6,.78);
   backdrop-filter: blur(2px);
 }
 .viewer-panel {
   position: relative;
   width: min(900px, 100%);
-  max-height: calc(100dvh - 16px);
+  max-height: calc(100dvh - 40px);
   display: flex;
   flex-direction: column;
-  gap: 9px;
-  padding: 10px;
+  gap: 11px;
+  padding: 16px;
   background: var(--panel);
   border: 1px solid var(--line-hi);
   box-shadow: 0 14px 48px rgba(0,0,0,.42);
@@ -711,210 +711,134 @@ h1 .pre { display: block; font-size: 0.36em; color: var(--blood-hi); letter-spac
 @keyframes thud { from { transform: rotate(-4deg) scale(2.2); opacity: 0; } to { transform: rotate(-4deg) scale(1); opacity: 0.92; } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .ecg .live { stroke-dasharray: none; } }
 
-/* === FLUIDE REAL: ocupar a tela disponível sem trocar a identidade do layout === */
-html, body { width:100%; min-width:0; }
-body {
-  padding: 12px 8px 24px;
-}
-.wrap {
-  width:100%;
-  max-width:none;
-  margin:0;
-  gap:18px;
-}
-.summary { padding: clamp(12px, 2.2vw, 18px); }
-.vault { grid-template-columns:repeat(5,minmax(0,1fr)); }
-.tabs {
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:6px;
-  overflow:visible;
-}
-.tabs .tab { min-width:0; flex:initial; }
-.row { min-width:0; }
-
-/* O dossiê usa toda a largura útil e distribui melhor a altura. */
-.viewer {
-  padding:8px;
-  align-items:stretch;
-}
-.viewer-panel {
-  width:100%;
-  max-width:none;
-  max-height:calc(100dvh - 16px);
-  height:auto;
-  margin:auto 0;
-  gap:12px;
-  padding:12px;
-}
-.viewer-head { padding-bottom:10px; }
-.viewer-title { font-size:clamp(23px, 4vw, 30px); }
-.viewer-stage {
-  width:100%;
-  height:clamp(260px, 48dvh, 680px);
-  min-height:220px;
-  max-height:calc(100dvh - 300px);
-  flex:0 1 auto;
-}
-.dossier-report {
-  display:grid;
-  grid-template-columns:minmax(0,1fr);
-  gap:14px;
-  padding:14px 14px 12px;
-}
-.report-copy { padding:0; }
-.dossier-report p {
-  max-width:none;
-  font-size:clamp(14px, 1.8vw, 16px);
-  line-height:1.5;
-}
-.report-control-stack {
-  width:100%;
-  display:grid;
-  grid-template-columns:minmax(0,1fr) 84px;
-  grid-template-rows:auto auto;
-  align-items:center;
-  column-gap:16px;
-  row-gap:9px;
-  padding-top:10px;
-  border-top:1px solid var(--line);
-}
-.control-caption { grid-column:1 / -1; font-size:8px; }
-.proof-tabs {
-  display:flex;
-  flex-direction:column;
-  gap:7px;
-  width:100%;
-}
-.proof-tab {
-  min-height:38px;
-  padding:5px 9px;
-  font-size:9px;
-}
-.zoom-controls {
-  min-height:78px;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  gap:5px;
-  padding:3px;
-  border:0;
-  background:transparent;
-  box-shadow:none;
-}
-.zoom-dial {
-  width:64px;
-  height:64px;
-  flex:0 0 64px;
-}
-.zoom-dial-face::before { left:29px; top:6px; height:12px; width:3px; }
-.zoom-dial-face::after { left:21px; top:21px; width:20px; height:20px; }
-.zoom-level {
-  min-width:0;
-  height:auto;
-  padding:1px 2px;
-  border:0;
-  background:transparent;
-  box-shadow:none;
-  font-size:11px;
-}
-.viewer-foot { margin-top:0; }
-
-/* Mantém o mesmo arranjo também em telas estreitas; apenas escala os elementos. */
-@media (max-width:650px) {
-  body { padding:10px 8px 20px; }
-  .wrap { max-width:none; gap:16px; }
-  .tabs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); overflow:visible; }
-  .tabs .tab { flex:initial; min-width:0; padding-left:5px; padding-right:5px; }
-  .viewer { padding:8px; }
-  .viewer-panel { width:100%; max-height:calc(100dvh - 16px); padding:10px; gap:10px; }
-  .viewer-stage {
-    height:clamp(230px, 43dvh, 620px);
-    min-height:190px;
-    max-height:calc(100dvh - 310px);
+/* === MOBILE REFERENCE LAYOUT: calibrated to the supplied 707px screenshot === */
+@media (max-width: 760px) {
+  body {
+    padding: 22px 16px 44px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
   }
-  .dossier-report { grid-template-columns:minmax(0,1fr); gap:12px; padding:12px; }
-  .report-control-stack {
-    width:100%;
-    grid-template-columns:minmax(0,1fr) 82px;
-    column-gap:12px;
-    row-gap:8px;
-  }
-  .control-caption { font-size:7px; }
-  .proof-tabs { gap:6px; }
-  .proof-tab { min-height:38px; font-size:9px; }
-  .zoom-controls { min-height:78px; gap:5px; padding:2px; }
-  .zoom-dial { width:62px; height:62px; flex-basis:62px; }
-  .zoom-dial-face::before { left:28px; top:6px; height:11px; }
-  .zoom-dial-face::after { left:20px; top:20px; width:20px; height:20px; }
-  .zoom-level { font-size:11px; }
-}
-@media (max-width:380px) {
-  .tabs { gap:4px; }
-  .tabs .tab { font-size:clamp(10px, 3.2vw, 13px); }
-  .viewer-stage { height:38dvh; max-height:calc(100dvh - 330px); }
-  .report-control-stack { grid-template-columns:minmax(0,1fr) 76px; }
-  .zoom-dial { width:58px; height:58px; flex-basis:58px; }
-  .zoom-dial-face::before { left:26px; top:5px; }
-  .zoom-dial-face::after { left:19px; top:19px; width:18px; height:18px; }
-}
+  .wrap { width:100%; max-width:none; gap:18px; }
+  .dateline { font-size:12px; gap:8px; }
+  h1 { font-size: clamp(72px, 18vw, 104px); margin-top:10px; }
+  .rule { margin-top:10px; height:6px; }
+  .sub { margin-top:9px; font-size:15px; line-height:1.35; max-width:none; }
+  .conf { right:0; top:30px; font-size:clamp(12px, 2.2vw, 16px); padding:4px 10px; transform:rotate(10deg); z-index:3; }
+  .summary { padding:14px 10px 10px; gap:10px; }
+  .sum-top { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:10px 18px; }
+  .sum-label { grid-column:1 / -1; font-size:12px; }
+  .count { font-size:clamp(58px, 10vw, 72px); line-height:.86; }
+  .ecg { width:100%; max-width:none; min-width:0; }
+  .status { font-size:30px; }
+  .ecg-note { font-size:10px; }
+  .ecg svg { height:42px; margin-top:0; }
+  .vault { grid-template-columns:repeat(5,minmax(0,1fr)); gap:4px; }
+  .cell { padding:7px 6px 6px; gap:2px; }
+  .cell .n { font-size:clamp(24px,4.5vw,30px); }
+  .cell .s { font-size:clamp(8px,1.45vw,10px); line-height:1.25; letter-spacing:.025em; overflow-wrap:anywhere; }
+  .cell .w { flex-direction:column; align-items:flex-start; gap:2px; margin-top:4px; }
+  .cell .w i { font-size:9px; line-height:1.1; padding:0 4px; }
+  .sum-foot { display:none; }
 
+  .guide-label { margin-bottom:-8px; }
+  .tabs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px; }
+  .tabs .tab { min-width:0; padding:9px 8px; }
+  .tab .who { font-size:clamp(18px,3.5vw,24px); }
+  .tab .meta { font-size:clamp(8px,1.45vw,10px); letter-spacing:.025em; white-space:nowrap; }
+  .bar-row { flex-wrap:nowrap; align-items:center; gap:8px; padding-bottom:8px; }
+  .bar-row h2 { font-size:clamp(22px,4.1vw,28px); }
+  .hint { font-size:10px; }
+  .pill { white-space:nowrap; padding:6px 10px; font-size:10px; }
 
-/* Refinamento de ocupação: margens equilibradas e evidências proporcionais. */
-body { padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
-.wrap { width:100%; max-width:none; }
-@media (max-width:650px) {
-  body { padding: 12px 12px 20px; }
-  .wrap { max-width:none; gap:16px; }
+  .list { gap:8px; }
   .row {
-    grid-template-columns: 38px minmax(0,1fr) 188px;
-    gap:9px;
-    padding:13px 10px 13px 9px;
+    display:grid;
+    grid-template-columns:88px minmax(0,1fr) minmax(0,44%);
+    gap:12px;
+    align-items:stretch;
+    padding:10px 10px 10px 7px;
+    min-height:0;
+  }
+  .identity {
+    min-width:0;
+    display:flex;
+    flex-direction:column;
     align-items:center;
+    justify-content:flex-start;
+    gap:10px;
+    padding:8px 8px 8px 0;
+    border-right:2px solid var(--line-hi);
   }
-  .num { font-size:38px; }
-  .photo-evidence { width:188px; gap:16px; }
-  .photo-stack { width:132px; height:88px; flex-basis:132px; }
-  .photo-controls { width:40px; flex-basis:40px; gap:7px; }
-  .found-control, .found-control .check { width:38px; height:36px; flex-basis:38px; }
-  .found-control .check::after { width:17px; height:17px; }
-  .dossier-open { width:38px; height:36px; }
-  .dossier-open svg { width:19px; height:19px; }
-  .viewer { padding:8px 12px; }
-  .viewer-panel { width:100%; max-width:none; padding:10px; gap:10px; }
-  .dossier-report { grid-template-columns:minmax(0,1fr); gap:12px; padding:12px; }
-  .report-control-stack {
+  .num { font-size:clamp(42px,7vw,58px); line-height:.9; }
+  .vertical-index {
+    writing-mode:vertical-rl;
+    transform:rotate(180deg);
+    border:1px solid var(--line-hi);
+    padding:6px 4px;
+    color:var(--fg);
+    font:11px var(--type);
+    letter-spacing:.12em;
+    white-space:nowrap;
+  }
+  .txt {
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    min-width:0;
+    padding:4px 0;
+  }
+  .title { font-size:clamp(18px,3.4vw,24px); line-height:1.06; overflow-wrap:normal; }
+  .desc { margin-top:6px; font-size:clamp(13px,2.2vw,16px); line-height:1.35; }
+  .chips { gap:5px; margin-top:12px; }
+  .chip { font-size:9px; padding:3px 6px; letter-spacing:.06em; }
+  .photo-evidence {
     width:100%;
-    grid-template-columns:minmax(110px, 1fr) 92px;
+    min-width:0;
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
     grid-template-rows:auto auto;
-    column-gap:14px;
-    row-gap:8px;
-    padding-top:10px;
+    gap:8px;
+    align-content:center;
+    justify-items:stretch;
   }
-  .control-caption { grid-column:1 / -1; font-size:8px; }
-  .proof-tabs { width:100%; gap:6px; }
-  .proof-tab { min-height:36px; padding:5px 9px; font-size:9px; letter-spacing:.06em; }
-  .zoom-controls { min-height:94px; gap:5px; align-items:center; justify-content:center; }
-  .zoom-dial { width:82px; height:82px; flex-basis:82px; }
-  .zoom-dial::before { inset:8px; }
-  .zoom-dial-face::before { left:38px; top:8px; width:4px; height:13px; }
-  .zoom-dial-face::after { left:27px; top:27px; width:24px; height:24px; }
-  .zoom-level { font-size:12px; }
+  .photo-stack {
+    width:100%;
+    height:auto;
+    aspect-ratio:1.78 / 1;
+    min-width:0;
+    flex:none;
+  }
+  .photo-controls {
+    width:100%;
+    flex:none;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+    align-items:stretch;
+  }
+  .dossier-open, .found-control, .found-control .check {
+    width:100%;
+    height:46px;
+    min-height:46px;
+    flex:none;
+    align-self:stretch;
+  }
+  .dossier-open svg { width:24px; height:24px; }
+  .found-control .check { width:100%; height:46px; }
+  .found-control .check::after { width:18px; height:18px; }
+  .viewer { padding:12px; }
+  .viewer-panel { width:100%; max-width:none; padding:10px; }
 }
-@media (max-width:420px) {
-  .row { grid-template-columns:34px minmax(0,1fr) 170px; gap:7px; padding:11px 8px; }
-  .photo-evidence { width:170px; gap:12px; }
-  .photo-stack { width:120px; height:82px; flex-basis:120px; }
-  .photo-controls { width:38px; flex-basis:38px; }
-  .found-control, .found-control .check, .dossier-open { width:36px; height:34px; flex-basis:36px; }
-  .num { font-size:35px; }
-  .title { font-size:18px; }
+@media (max-width: 560px) {
+  body { padding-left:12px; padding-right:12px; }
+  .row { grid-template-columns:72px minmax(0,1fr) minmax(0,42%); gap:9px; padding:8px 8px 8px 6px; }
+  .identity { padding-right:6px; }
+  .num { font-size:42px; }
+  .title { font-size:17px; }
   .desc { font-size:12px; }
-  .report-control-stack { grid-template-columns:minmax(100px,1fr) 88px; column-gap:10px; }
-  .zoom-dial { width:76px; height:76px; flex-basis:76px; }
-  .zoom-dial-face::before { left:35px; top:7px; }
-  .zoom-dial-face::after { left:25px; top:25px; width:22px; height:22px; }
+  .photo-controls { gap:6px; }
+  .dossier-open, .found-control, .found-control .check { height:40px; min-height:40px; }
+  .found-control .check { height:40px; }
 }
 
 </style>
@@ -1213,13 +1137,15 @@ function renderList() {
     const chips = [
       isNext ? '<span class="chip next">Próximo</span>' : '',
       `<span class="chip">${AREAS[r.area]}</span>`,
-      `<span class="chip">Nº ${gid}/${TOTAL}</span>`,
       r.req ? `<span class="chip key">Requer: ${r.req}</span>` : '',
       ''
     ].join('');
     return `<li class="item${done ? ' done' : ''}${isNext ? ' next' : ''}">
       <div class="row">
-        <span class="num">${String(i + 1).padStart(2, '0')}</span>
+        <div class="identity">
+          <span class="num">${String(i + 1).padStart(2, '0')}</span>
+          <span class="vertical-index">Nº ${gid}/${TOTAL}</span>
+        </div>
         <span class="txt">
           <span class="title">${r.title}</span>
           <span class="desc">${r.desc}</span>
@@ -1231,12 +1157,12 @@ function renderList() {
             <img class="photo-card" src="${r.images[1]}" alt="Prova 02 de ${r.title}" onerror="this.outerHTML='<span class=&quot;photo-card missing&quot;>PROVA 02<br>PENDENTE</span>'">
           </button>
           <div class="photo-controls">
-            <label class="found-control" for="chk-${current}-${id}" title="Marcar como encontrado">
-              <input type="checkbox" class="check" data-id="${id}" id="chk-${current}-${id}" ${done ? 'checked' : ''} aria-label="Marcar ${r.title} como encontrado">
-            </label>
             <button type="button" class="dossier-open" data-open-photo="${id}" aria-label="Abrir dossiê fotográfico de ${r.title}">
               <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 5.5h6l1.7 2H18v9H2z"/><path d="M2 5.5V3.8h5.8l1.7 1.7M6.5 11h7"/></svg>
             </button>
+            <label class="found-control" for="chk-${current}-${id}" title="Marcar como encontrado">
+              <input type="checkbox" class="check" data-id="${id}" id="chk-${current}-${id}" ${done ? 'checked' : ''} aria-label="Marcar ${r.title} como encontrado">
+            </label>
           </div>
         </div>
       </div>
