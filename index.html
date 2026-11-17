@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mr. Raccoon Tracker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Special+Elite&display=swap">
+<style>
+/* Layout: a police evidence log. Masthead with a CONFIDENCIAL stamp, then the main panel: total count, ECG monitor and the item box of all 15. Below it the journey guide (case-file tabs plus evidence rows in play order) that exists only to keep the player oriented. Square corners, thin lines, grain over everything. */
+:root {
+  --bg: #080a09;
+  --panel: #0f1311;
+  --panel-2: #151a17;
+  --line: #2a312c;
+  --line-hi: #46504a;
+  --fg: #dde1d6;
+  --muted: #7f897f;
+  --blood: #b3171f;
+  --blood-hi: #e5303a;
+  --herb: #74b261;
+  --amber: #dba545;
+  --display: "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --type: "Special Elite", "Courier New", Courier, monospace;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  background-image: radial-gradient(ellipse at 50% -10%, rgba(179, 23, 31, 0.18), transparent 55%);
+  background-repeat: no-repeat;
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.45;
+  padding-block: 26px 60px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+/* film grain and a dark vignette, above the page, never intercepting clicks */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  background-image:
+    radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='.07'/></svg>");
+}
+.wrap { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+button { font: inherit; color: inherit; cursor: pointer; border-radius: 0; }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+/* Masthead */
+header { position: relative; }
+.dateline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-family: var(--type); font-size: 12.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blood-hi); animation: beacon 2.4s ease-in-out infinite; flex-shrink: 0; }
+h1 { margin: 12px 0 0; font-family: var(--display); font-weight: 700; text-transform: uppercase; line-height: 0.86; letter-spacing: 0.01em; font-size: clamp(64px, 20vw, 128px); }
+h1 .pre { display: block; font-size: 0.36em; color: var(--blood-hi); letter-spacing: 0.18em; margin-bottom: 0.1em; }
+.rule { height: 6px; margin-top: 14px; background: repeating-linear-gradient(115deg, var(--blood) 0 14px, transparent 14px 20px); opacity: 0.9; }
+.sub { margin: 12px 0 0; color: var(--muted); max-width: 54ch; font-size: 15px; }
+.conf { position: absolute; right: 0; top: 34px; transform: rotate(7deg); font-family: var(--type); font-size: 15px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--blood-hi); border: 3px double var(--blood-hi); padding: 4px 12px; opacity: 0.8; }
+@media (max-width: 600px) { .conf { top: 6px; font-size: 11px; padding: 2px 8px; } }
+
+/* Main panel: total, ECG, item box */
+.summary { border: 1px solid var(--line-hi); background: var(--panel); padding: 18px; display: flex; flex-direction: column; gap: 18px; }
+.sum-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px 28px; flex-wrap: wrap; }
+.sum-label { font-family: var(--type); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.count { font-family: var(--display); font-weight: 700; font-size: 96px; line-height: 0.85; font-variant-numeric: tabular-nums; }
+.count small { font-size: 0.45em; color: var(--muted); font-weight: 600; }
+.ecg { flex: 1 1 200px; max-width: 340px; min-width: 0; color: var(--herb); }
+.ecg.caution { color: var(--amber); }
+.ecg.danger { color: var(--blood-hi); }
+.ecg-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.status { font-family: var(--display); font-weight: 700; font-size: 30px; letter-spacing: 0.14em; text-transform: uppercase; line-height: 1; }
+.ecg-note { font-family: var(--type); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.ecg svg { display: block; width: 100%; height: 52px; margin-top: 6px; }
+.ecg path { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.ecg .bg { opacity: 0.22; }
+.ecg .live { stroke-dasharray: 70 230; animation: sweep 2.6s linear infinite; }
+.ecg.danger .live { animation-duration: 1.4s; }
+
+.vault { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+@media (max-width: 520px) { .vault { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.cell { border: 1px solid var(--line); background: var(--bg); padding: 8px; display: flex; flex-direction: column; gap: 2px; min-width: 0; transition: all 0.2s; }
+.cell .n { font-family: var(--display); font-weight: 700; font-size: 30px; line-height: 1; color: var(--line-hi); font-variant-numeric: tabular-nums; }
+.cell .s { font-family: var(--type); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); overflow-wrap: anywhere; }
+.cell .w { display: flex; gap: 4px; margin-top: 5px; }
+.cell .w i { font-style: normal; font-family: var(--type); font-size: 10.5px; border: 1px solid var(--line); color: var(--line-hi); padding: 0 5px; }
+.cell.on .w i { border-color: var(--herb); color: var(--herb); }
+.cell.on { border-color: var(--herb); background: rgba(116, 178, 97, 0.12); }
+.cell.on .n { color: var(--herb); }
+.cell.on .s { color: var(--fg); }
+.cell.off { opacity: 0.4; }
+.sum-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-family: var(--type); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+/* Journey guide */
+.guide-label { margin-bottom: -10px; font-family: var(--type); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+@media (max-width: 560px) { .tabs { grid-template-columns: repeat(2, 1fr); } }
+.tab { background: transparent; border: 1px solid var(--line); border-top: 3px solid var(--line); padding: 10px 12px; text-align: left; display: flex; flex-direction: column; min-width: 0; transition: border-color 0.15s, background 0.15s; }
+.tab:hover { border-color: var(--line-hi); background: var(--panel); }
+.tab .who { font-family: var(--display); font-weight: 700; font-size: 24px; line-height: 1; text-transform: uppercase; letter-spacing: 0.04em; }
+.tab .meta { margin-top: 4px; font-family: var(--type); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tab[aria-selected="true"] { background: var(--panel-2); border-color: var(--line-hi); border-top-color: var(--blood-hi); }
+.tab[aria-selected="true"] .meta { color: var(--fg); }
+
+.bar-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.bar-row h2 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 26px; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.1; }
+.hint { font-family: var(--type); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.pill { border: 1px solid var(--line-hi); background: transparent; padding: 6px 12px; font-family: var(--type); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); transition: all 0.15s; }
+.pill:hover { color: var(--fg); border-color: var(--fg); }
+.pill[aria-pressed="true"] { color: var(--amber); border-color: var(--amber); }
+.pill.danger:hover { color: var(--blood-hi); border-color: var(--blood-hi); }
+
+/* Evidence rows */
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.item { border: 1px solid var(--line); background: var(--panel); }
+.row { display: grid; grid-template-columns: 48px minmax(0, 1fr) 28px; gap: 14px; align-items: start; padding: 16px 16px 16px 12px; cursor: pointer; position: relative; transition: background 0.15s; }
+.row:hover { background: var(--panel-2); }
+.item.next { border-color: var(--line-hi); }
+.item.next .row { background: linear-gradient(90deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015)); }
+.item.next .row::before { content: ""; position: absolute; left: -1px; top: -1px; bottom: -1px; width: 4px; background: var(--blood-hi); animation: beacon 2.4s ease-in-out infinite; }
+.num { font-family: var(--display); font-weight: 700; font-size: 44px; line-height: 0.9; color: var(--line-hi); text-align: center; font-variant-numeric: tabular-nums; }
+.item.next .num { color: var(--amber); }
+.item.done .num { color: var(--herb); }
+.txt { min-width: 0; }
+.title { display: block; font-family: var(--display); font-weight: 700; font-size: 23px; line-height: 1.1; text-transform: uppercase; letter-spacing: 0.03em; overflow-wrap: anywhere; }
+.desc { display: block; margin-top: 4px; color: var(--muted); font-size: 15px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 11px; }
+.chip { font-family: var(--type); font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 8px; border: 1px solid var(--line-hi); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.key { border-color: var(--amber); color: var(--amber); }
+.chip.next { background: var(--amber); border-color: var(--amber); color: #1a1405; }
+.item.done .title { color: var(--muted); }
+.item.done .desc { opacity: 0.55; }
+.stamp { font-family: var(--type); font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--blood-hi); border: 2px solid var(--blood-hi); padding: 1px 9px; transform: rotate(-4deg); opacity: 0.92; margin-left: 4px; }
+.stamp.just { animation: thud 0.38s cubic-bezier(0.2, 1.5, 0.4, 1); }
+
+/* Checkbox */
+.check { appearance: none; -webkit-appearance: none; margin: 0; width: 28px; height: 28px; border: 2px solid var(--line-hi); background: var(--bg); display: grid; place-content: center; cursor: pointer; transition: all 0.15s; border-radius: 0; }
+.check:hover { border-color: var(--fg); }
+.check::after { content: ""; width: 14px; height: 14px; background: var(--bg); clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%); transform: scale(0); transition: transform 0.12s ease-out; }
+.check:checked { background: var(--herb); border-color: var(--herb); }
+.check:checked::after { transform: scale(1); }
+
+.empty { border: 1px dashed var(--line-hi); padding: 36px 16px; text-align: center; color: var(--muted); }
+.empty strong { display: block; color: var(--fg); font-family: var(--display); font-size: 28px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+
+.foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); padding-top: 14px; }
+.foot-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.confirm { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.confirm[hidden], .pill[hidden], .stamp[hidden] { display: none; }
+
+
+/* Evidence strip — thumbnail and controls share one compact horizontal row */
+.photo-evidence {
+  width: 172px;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 22px;
+}
+.photo-stack {
+  position: relative;
+  display: block;
+  width: 118px;
+  height: 80px;
+  flex: 0 0 118px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+.photo-card {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--panel-2);
+  border: 1px solid var(--line-hi);
+  box-shadow: 0 3px 9px rgba(0,0,0,.34);
+  transition: transform .2s ease, border-color .2s ease;
+}
+.photo-card:first-child {
+  z-index: 2;
+  transform: translate(-3px,2px) rotate(-2deg);
+}
+.photo-card:last-child {
+  z-index: 1;
+  transform: translate(4px,-2px) rotate(2.5deg);
+}
+.photo-stack[data-front="1"] .photo-card:first-child {
+  z-index: 1;
+  transform: translate(4px,-2px) rotate(2.5deg);
+}
+.photo-stack[data-front="1"] .photo-card:last-child {
+  z-index: 2;
+  transform: translate(-3px,2px) rotate(-2deg);
+}
+.photo-stack:hover .photo-card { border-color: var(--amber); }
+.photo-card.missing {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font: 9px var(--type);
+  letter-spacing: .07em;
+  text-align: center;
+  padding: 4px;
+}
+.photo-controls {
+  width: 32px;
+  flex: 0 0 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 8px;
+}
+.found-control {
+  width: 32px;
+  height: 29px;
+  flex: 0 0 32px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.found-control .check {
+  width: 32px;
+  height: 29px;
+  flex: 0 0 32px;
+}
+.found-control .check::after { width: 14px; height: 14px; }
+.dossier-open {
+  width: 32px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  align-self: flex-start;
+  padding: 0;
+  border: 1px solid var(--line-hi);
+  background: transparent;
+  color: var(--muted);
+  transition: color .15s, border-color .15s, background .15s;
+}
+.dossier-open:hover {
+  color: var(--amber);
+  border-color: var(--amber);
+  background: var(--panel-2);
+}
+.dossier-open svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.45;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+.row {
+  grid-template-columns: 48px minmax(0,1fr) 172px;
+  align-items: center;
+  cursor: default;
+}
+.row .txt { cursor: default; }
+.row .check { align-self: center; }
+
+/* Dossier — warm charcoal evidence sheet, continuous with the tracker */
+.viewer[hidden] { display: none; }
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(5,8,6,.78);
+  backdrop-filter: blur(2px);
+}
+.viewer-panel {
+  position: relative;
+  width: min(900px, 100%);
+  max-height: calc(100dvh - 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 16px;
+  background: var(--panel);
+  border: 1px solid var(--line-hi);
+  box-shadow: 0 14px 48px rgba(0,0,0,.42);
+}
+.viewer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--line);
+}
+.viewer-kicker {
+  color: var(--blood-hi);
+  font: 10px var(--type);
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+.viewer-title {
+  margin-top: 3px;
+  font: 700 27px/1 var(--display);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.viewer-close {
+  min-width: 32px;
+  min-height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--line-hi);
+  background: transparent;
+  color: var(--muted);
+  font: 10px var(--type);
+}
+.viewer-close:hover { color: var(--blood-hi); border-color: var(--blood-hi); }
+.viewer-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 130px;
+  max-height: calc(100dvh - 250px);
+  padding: 8px;
+  background:
+    radial-gradient(ellipse at center, rgba(65,75,66,.28), transparent 72%),
+    var(--panel-2);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.viewer-image {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100dvh - 285px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+.viewer-placeholder {
+  display: none;
+  padding: 42px 20px;
+  text-align: center;
+  color: var(--muted);
+  font: 11px var(--type);
+  letter-spacing: .1em;
+}
+.viewer-placeholder.show { display: block; }
+.dossier-report {
+  padding: 9px 12px;
+  border-left: 2px solid var(--blood-hi);
+  background: rgba(255,255,255,.025);
+}
+.report-label {
+  color: var(--blood-hi);
+  font: 10px var(--type);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.dossier-report p {
+  margin: 5px 0 0;
+  color: var(--fg);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.report-access {
+  margin-top: 6px;
+  color: var(--amber);
+  font: 10px var(--type);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.report-access:empty { display: none; }
+.viewer-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.viewer-caption {
+  color: var(--muted);
+  font: 10px var(--type);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.proof-tabs { display: flex; gap: 4px; }
+.proof-tab {
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-bottom: 2px solid var(--line-hi);
+  background: transparent;
+  color: var(--muted);
+  font: 10px var(--type);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.proof-tab:hover { color: var(--fg); border-bottom-color: var(--fg); }
+.proof-tab[aria-selected="true"] {
+  color: var(--amber);
+  border-bottom-color: var(--blood-hi);
+  background: rgba(255,255,255,.025);
+}
+@media (max-width: 650px) {
+  .row {
+    grid-template-columns: 34px minmax(0,1fr) 118px;
+    gap: 8px;
+    padding: 12px 9px;
+  }
+  .photo-evidence { width: 118px; gap: 18px; }
+  .photo-stack { width: 76px; height: 58px; flex-basis: 76px; }
+  .photo-controls { width: 28px; flex-basis: 28px; gap: 5px; }
+  .found-control { width: 28px; height: 26px; flex-basis: 28px; }
+  .found-control .check { width: 28px; height: 26px; flex-basis: 28px; }
+  .found-control .check::after { width: 12px; height: 12px; }
+  .dossier-open { width: 28px; height: 26px; }
+  .num { font-size: 36px; }
+  .title { font-size: 20px; }
+  .desc { font-size: 13px; }
+  .viewer { padding: 10px; }
+  .viewer-panel { padding: 10px; gap: 8px; }
+  .viewer-title { font-size: 22px; }
+  .viewer-stage { max-height: calc(100dvh - 250px); min-height: 110px; }
+  .viewer-image { max-height: calc(100dvh - 285px); }
+  .viewer-caption { display: none; }
+  .dossier-report { padding: 8px 10px; }
+  .dossier-report p { font-size: 13px; }
+}
+@keyframes beacon { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+@keyframes sweep { from { stroke-dashoffset: 70; } to { stroke-dashoffset: -230; } }
+@keyframes thud { from { transform: rotate(-4deg) scale(2.2); opacity: 0; } to { transform: rotate(-4deg) scale(1); opacity: 0.92; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .ecg .live { stroke-dasharray: none; } }
+</style>
+</head>
+
+<div class="wrap">
+  <header>
+    <div class="dateline"><span class="dot"></span><span>Raccoon City</span><span>·</span><span>29 set 1998</span><span>·</span><span id="totalLine">Registro de evidências</span></div>
+    <h1><span class="pre">Mr.</span>Raccoon</h1>
+    <div class="rule"></div>
+    <p class="sub">Resident Evil 2. Registre cada unidade localizada. Consulte as provas fotográficas e o relatório de campo de cada ocorrência.</p>
+    <div class="conf" aria-hidden="true">Confidencial</div>
+  </header>
+
+  <section class="summary" aria-live="polite">
+    <div class="sum-top">
+      <div>
+        <div class="sum-label">Mr. Raccoons encontrados</div>
+        <div class="count" id="count">00<small>/15</small></div>
+      </div>
+      <div class="ecg danger" id="ecg">
+        <div class="ecg-head"><span class="status" id="status">Perigo</span><span class="ecg-note">Condição</span></div>
+        <svg viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true">
+          <path class="bg" pathLength="300" d="M0 22 H44 L52 22 L58 8 L66 36 L74 14 L80 22 H122 L130 22 L136 10 L144 34 L150 22 H200"/>
+          <path class="live" pathLength="300" d="M0 22 H44 L52 22 L58 8 L66 36 L74 14 L80 22 H122 L130 22 L136 10 L144 34 L150 22 H200"/>
+        </svg>
+      </div>
+    </div>
+    <div class="vault" id="vault"></div>
+    <div class="sum-foot">
+      <span>L = Leon · C = Claire: quem pode achar cada um. Itens apagados não existem na jornada aberta.</span>
+      <span class="stamp" id="doneStamp" hidden>Completo</span>
+    </div>
+  </section>
+
+  <div class="guide-label">Guia da jornada</div>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Jornadas"></nav>
+
+  <div class="bar-row">
+    <div>
+      <h2 id="listTitle">Jornada</h2>
+      <div class="hint" id="hint"></div>
+    </div>
+    <button class="pill" id="hideDone" aria-pressed="false">Ocultar achados</button>
+  </div>
+
+  <ul class="list" id="list"></ul>
+
+  <div class="foot">
+    <span>O progresso fica salvo neste navegador e vale para todas as jornadas.</span>
+    <span class="foot-actions">
+      <button class="pill danger" id="resetBtn">Zerar tudo</button>
+      <span class="confirm" id="confirm" hidden>
+        <span>Apagar todo o progresso?</span>
+        <button class="pill danger" id="confirmYes">Apagar</button>
+        <button class="pill" id="confirmNo">Cancelar</button>
+      </span>
+    </span>
+  </div>
+</div>
+
+
+<div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-labelledby="viewerTitle">
+  <div class="viewer-panel">
+    <div class="viewer-head">
+      <div><div class="viewer-kicker">Dossiê fotográfico · Provas</div><div class="viewer-title" id="viewerTitle">Localização</div></div>
+      <button class="viewer-close" id="viewerClose" type="button" aria-label="Fechar dossiê">FECHAR ×</button>
+    </div>
+    <div class="viewer-stage">
+      <img class="viewer-image" id="viewerImage" alt="Evidência fotográfica ampliada">
+      <div class="viewer-placeholder" id="viewerPlaceholder">PROVA AINDA NÃO CADASTRADA<br>ADICIONE O ARQUIVO À PASTA ASSETS</div>
+    </div>
+    <section class="dossier-report" aria-labelledby="reportLabel">
+      <div class="report-label" id="reportLabel">Relatório de localização</div>
+      <p id="viewerDetail"></p>
+      <div class="report-access" id="viewerAccess"></div>
+    </section>
+    <div class="viewer-foot">
+      <div class="viewer-caption" id="viewerCaption">Registro de localização · Raccoon City</div>
+      <div class="proof-tabs" role="tablist" aria-label="Provas fotográficas">
+        <button class="proof-tab" id="proofOne" type="button" role="tab" aria-selected="true">Prova 01</button>
+        <button class="proof-tab" id="proofTwo" type="button" role="tab" aria-selected="false">Prova 02</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const AREAS = { ext: 'Exterior', dp: 'Delegacia', sew: 'Esgotos', lab: 'Laboratório', orph: 'Orfanato' };
+
+/* Cadastro global reorganizado conforme a sequência do guia IGN enviado pelo usuário. */
+const RACCOONS = {
+  west_office: {
+    area: 'dp', short: 'Escritório Oeste', title: 'Escritório Oeste · 1º andar',
+    desc: 'Na estante alta da parede norte.',
+    dossier: 'O boneco está no alto da estante encostada à parede norte do Escritório Oeste, no primeiro andar da delegacia. Observe a parte superior das prateleiras.',
+    images: ['assets/escritorio oeste 1.webp', 'assets/escritorio oeste 2.webp']
+  },
+  firing_range: {
+    area: 'dp', short: 'Campo de Tiro', title: 'Campo de Tiro · SS 1',
+    desc: 'No canto sudoeste do estande.',
+    dossier: 'Procure no canto sudoeste do Campo de Tiro, no andar SS 1 da delegacia. O boneco fica no chão, próximo à área dos alvos.',
+    images: ['assets/campo de tiro 1.webp', 'assets/campo de tiro 2.webp']
+  },
+  east_hall: {
+    area: 'dp', short: 'Escadaria do Chefe', title: 'Exterior do Escritório do Chefe · 2º andar',
+    desc: 'Sobre a mesa quadrada junto à escadaria.',
+    dossier: 'O Mr. Raccoon está sobre uma mesa quadrada ao lado da escadaria, em frente ao Escritório do Chefe, no segundo andar da delegacia.',
+    images: ['assets/escritorio do chefe 1.webp', 'assets/escritorio do chefe 2.webp']
+  },
+  clock_tower: {
+    area: 'dp', short: 'Torre do Relógio', title: 'Corredor da Torre do Relógio · 3º andar',
+    desc: 'No batente da janela do corredor bloqueado.',
+    dossier: 'O boneco está no batente da janela do corredor bloqueado à esquerda do Almoxarifado Oeste. O acesso é feito somente pela porta à esquerda na Torre do Relógio, no terceiro andar.',
+    images: ['assets/torre do relogio 1.webp', 'assets/torre do relogio 2.webp']
+  },
+  stars_office: {
+    area: 'dp', short: 'Escritório S.T.A.R.S.', title: 'Escritório S.T.A.R.S. · 2º andar',
+    desc: 'Entre as caixas e o monitor, na mesa ao sudeste.',
+    dossier: 'Procure na mesa localizada no canto sudeste do Escritório S.T.A.R.S., no segundo andar. O Mr. Raccoon está escondido entre duas caixas e o monitor do computador.',
+    images: ['assets/escritorio S.T.A.R.S. 1.webp', 'assets/escritorio S.T.A.R.S. 2.webp']
+  },
+  break_room: {
+    area: 'dp', short: 'Sala de Descanso', title: 'Sala de Descanso · 1º andar',
+    desc: 'Entre a bolsa de couro e o pé do beliche.',
+    dossier: 'Na Sala de Descanso, no primeiro andar, verifique o espaço entre a bolsa de couro e o pé do beliche. Com Claire, este colecionável só pode ser obtido na Jornada 2.',
+    req: 'Chave de Paus',
+    images: ['assets/sala de descanso 1.webp', 'assets/sala de descanso 2.webp']
+  },
+  east_storage: {
+    area: 'dp', short: 'Almoxarifado Leste', title: 'Sala ao sul do Almoxarifado Leste · 3º andar',
+    desc: 'Sobre caixas, no canto da estante ao sul.',
+    dossier: 'Na sala ao sul do Almoxarifado Leste, no terceiro andar, procure algumas caixas posicionadas no canto da estante. O acesso exige a Chave de Copas e, por isso, este colecionável está disponível para Claire.',
+    req: 'Chave de Copas',
+    images: ['assets/almoxarifado leste 1.webp', 'assets/almoxarifado leste 2.webp']
+  },
+  ext_bushes: {
+    area: 'ext', short: 'Entrada da Delegacia', title: 'Área externa · Entrada da R.P.D.',
+    desc: 'Sob as plantas, perto da mangueira.',
+    dossier: 'Procure sob as plantas no lado norte da área à direita da entrada da delegacia, próximo a uma mangueira. Este Mr. Raccoon só aparece na Jornada 2 e pode ser encontrado por Leon ou Claire.',
+    images: ['assets/entrada externa 1.webp', 'assets/entrada externa 2.webp']
+  },
+  bus: {
+    area: 'ext', short: 'Ônibus', title: 'Ônibus · Atrás da R.P.D.',
+    desc: 'À direita do volante do ônibus.',
+    dossier: 'Entre no ônibus usado para chegar ao orfanato. O Mr. Raccoon está à direita do volante. Este colecionável só pode ser encontrado na campanha de Claire.',
+    images: ['assets/ruas de racoon 1.webp', 'assets/ruas de racoon 2.webp']
+  },
+  orphanage: {
+    area: 'orph', short: 'Berçário', title: 'Orfanato · Berçário · 2º andar',
+    desc: 'No móvel em frente à porta do Berçário.',
+    dossier: 'No segundo andar do orfanato, observe o móvel que fica bem em frente à porta de entrada do Berçário. Este Mr. Raccoon só pode ser encontrado na campanha de Claire.',
+    images: ['assets/orfanato 1.webp', 'assets/orfanato 2.webp']
+  },
+  croc_sewers: {
+    area: 'sew', short: 'Área do Crocodilo', title: 'Entrada do Esgoto · Área do Crocodilo',
+    desc: 'No canto sudeste da área após o confronto.',
+    dossier: 'Depois de escapar do crocodilo gigante e eliminá-lo, procure no canto sudeste da área. Este colecionável é exclusivo da campanha de Leon.',
+    images: ['assets/crocodilo 1.webp', 'assets/crocodilo 2.webp']
+  },
+  lower_sewers: {
+    area: 'sew', short: 'Almoxarifado', title: 'Esgoto · Área à direita do Almoxarifado',
+    desc: 'Próximo à parede sul, no nível inferior.',
+    dossier: 'No nível inferior dos esgotos, vá até a área localizada à direita do Almoxarifado. O Mr. Raccoon está próximo à parede sul.',
+    images: ['assets/esgoto 1.webp', 'assets/esgoto 2.webp']
+  },
+  ada_sewers: {
+    area: 'sew', short: 'Incinerador · Ada', title: 'Esgoto · Incinerador (trecho de Ada)',
+    desc: 'No canto sudoeste da área do Incinerador.',
+    dossier: 'Durante o trecho em que você controla Ada, procure no canto sudoeste da área do Incinerador. Este Mr. Raccoon só pode ser encontrado na campanha de Leon.',
+    images: ['assets/ada 1.webp', 'assets/ada 2.webp']
+  },
+  cafeteria: {
+    area: 'lab', short: 'Refeitório', title: 'Laboratório · Refeitório',
+    desc: 'Sobre a bancada à direita, perto da escada da cozinha.',
+    dossier: 'No lado direito do Refeitório, na área norte do laboratório, procure sobre a bancada próxima à escada que leva à Cozinha.',
+    images: ['assets/refeitorio laboratorio 1.webp', 'assets/refeitorio laboratorio 2.webp']
+  },
+  nap_room: {
+    area: 'lab', short: 'Sala de Soneca', title: 'Laboratório · Sala de Soneca',
+    desc: 'No último dormitório, junto ao painel do modulador.',
+    dossier: 'Na área norte do laboratório, vá até o último dormitório da Sala de Soneca. Para revelar o Mr. Raccoon, use o Modulador de Sinal no painel existente no local.',
+    req: 'Modulador de Sinal',
+    images: ['assets/sala de soneca 1.webp', 'assets/sala de soneca 2.webp']
+  }
+};
+const ALL_IDS = Object.keys(RACCOONS);
+const TOTAL = ALL_IDS.length;
+
+const JOURNEYS = {
+  'leon-1':   { char: 'L', who: 'Leon',   label: 'Jornada 1', order: ['west_office','east_hall','stars_office','firing_range','break_room','clock_tower','croc_sewers','ada_sewers','lower_sewers','cafeteria','nap_room'] },
+  'leon-2':   { char: 'L', who: 'Leon',   label: 'Jornada 2', order: ['ext_bushes','west_office','east_hall','stars_office','firing_range','break_room','clock_tower','croc_sewers','ada_sewers','lower_sewers','cafeteria','nap_room'] },
+  'claire-1': { char: 'C', who: 'Claire', label: 'Jornada 1', order: ['west_office','east_hall','stars_office','firing_range','east_storage','clock_tower','bus','orphanage','lower_sewers','cafeteria','nap_room'] },
+  'claire-2': { char: 'C', who: 'Claire', label: 'Jornada 2', order: ['ext_bushes','west_office','east_hall','stars_office','firing_range','east_storage','clock_tower','bus','orphanage','lower_sewers','cafeteria','nap_room'] }
+};
+
+const STORE_KEY = 're2-raccoon-tracker-v2';
+const FALLBACK_TAB = 'leon-1';
+let state = {};
+let current = FALLBACK_TAB;
+let hideDone = false;
+let justId = null;
+
+/* Progress is global: a Mr. Raccoon destroyed once counts in every journey. Older saves kept per-journey progress, so merge those. */
+function load() {
+  let raw = {};
+  try { raw = JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) { raw = {}; }
+  state = {};
+  Object.keys(raw).forEach(k => {
+    if (raw[k] === true) state[k] = true;
+    else if (raw[k] && typeof raw[k] === 'object') Object.keys(raw[k]).forEach(id => { if (raw[k][id]) state[id] = true; });
+  });
+  try { hideDone = localStorage.getItem(STORE_KEY + '-hide') === '1'; } catch (e) {}
+}
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
+function isDone(j, id) { return !!state[id]; }
+function counts(j) {
+  const order = JOURNEYS[j].order;
+  return { done: order.filter(id => isDone(j, id)).length, total: order.length };
+}
+/* Which characters can find this one, and which of them already did. */
+function canFind(ch, id) { return Object.values(JOURNEYS).some(j => j.char === ch && j.order.includes(id)); }
+function foundAnywhere(id) { return !!state[id]; }
+
+/* Without a link hash, open the journey the person used last. */
+function route() {
+  const h = location.hash.replace('#', '');
+  if (JOURNEYS[h]) { current = h; try { localStorage.setItem(STORE_KEY + '-tab', h); } catch (e) {} return; }
+  let last = null;
+  try { last = localStorage.getItem(STORE_KEY + '-tab'); } catch (e) {}
+  current = JOURNEYS[last] ? last : FALLBACK_TAB;
+}
+
+function renderSummary() {
+  const grand = ALL_IDS.filter(foundAnywhere).length;
+  document.getElementById('totalLine').textContent = `${TOTAL} no total`;
+  document.getElementById('count').innerHTML = `${String(grand).padStart(2, '0')}<small>/${TOTAL}</small>`;
+  document.getElementById('doneStamp').hidden = grand !== TOTAL;
+
+  const pct = grand / TOTAL;
+  const level = pct < 0.34 ? 'danger' : pct < 0.67 ? 'caution' : 'fine';
+  document.getElementById('ecg').className = 'ecg ' + level;
+  document.getElementById('status').textContent = { danger: 'Perigo', caution: 'Cuidado', fine: 'Bem' }[level];
+
+  const inJourney = JOURNEYS[current].order;
+  document.getElementById('vault').innerHTML = ALL_IDS.map((id, i) => {
+    const r = RACCOONS[id];
+    const on = foundAnywhere(id);
+    const letters = ['L', 'C'].filter(ch => canFind(ch, id))
+      .map(ch => `<i>${ch}</i>`).join('');
+    return `<div class="cell${on ? ' on' : ''}${!on && !inJourney.includes(id) ? ' off' : ''}">
+      <span class="n">${String(i + 1).padStart(2, '0')}</span>
+      <span class="s">${r.short}</span>
+      <span class="w">${letters}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderTabs() {
+  document.getElementById('tabs').innerHTML = Object.keys(JOURNEYS).map(id => {
+    const j = JOURNEYS[id], c = counts(id);
+    return `<button class="tab" role="tab" data-j="${id}" aria-selected="${id === current}">
+      <span class="who">${j.who}</span>
+      <span class="meta">${j.label} · ${c.done}/${c.total}</span>
+    </button>`;
+  }).join('');
+}
+
+function renderList() {
+  const j = JOURNEYS[current];
+  const c = counts(current);
+  document.getElementById('listTitle').textContent = `${j.who} · ${j.label}`;
+  document.getElementById('hint').textContent = `${c.total} dos ${TOTAL} aparecem nesta jornada`;
+  const nextId = j.order.find(id => !isDone(current, id));
+  const rows = j.order.map((id, i) => ({ id, i, r: RACCOONS[id], done: isDone(current, id) }))
+    .filter(x => !(hideDone && x.done));
+
+  const list = document.getElementById('list');
+  if (!rows.length) {
+    const all = c.done === c.total;
+    list.innerHTML = `<li class="empty"><strong>${all ? 'Jornada completa' : 'Nada por aqui'}</strong>${all ? `Os ${c.total} Mr. Raccoons desta jornada estão marcados.` : 'Desative o filtro para ver a lista completa.'}</li>`;
+    return;
+  }
+  list.innerHTML = rows.map(({ id, i, r, done }) => {
+    const isNext = id === nextId;
+    const gid = String(ALL_IDS.indexOf(id) + 1).padStart(2, '0');
+    const chips = [
+      isNext ? '<span class="chip next">Próximo</span>' : '',
+      `<span class="chip">${AREAS[r.area]}</span>`,
+      `<span class="chip">Nº ${gid}/${TOTAL}</span>`,
+      r.req ? `<span class="chip key">Requer: ${r.req}</span>` : '',
+      ''
+    ].join('');
+    return `<li class="item${done ? ' done' : ''}${isNext ? ' next' : ''}">
+      <div class="row">
+        <span class="num">${String(i + 1).padStart(2, '0')}</span>
+        <span class="txt">
+          <span class="title">${r.title}</span>
+          <span class="desc">${r.desc}</span>
+          <span class="chips">${chips}</span>
+        </span>
+        <div class="photo-evidence" aria-label="Fotografias de ${r.title}">
+          <button type="button" class="photo-stack" data-id="${id}" data-front="0" aria-label="Alternar entre Prova 01 e Prova 02 de ${r.title}" title="Alternar prova em destaque">
+            <img class="photo-card" src="${r.images[0]}" alt="Prova 01 de ${r.title}" onerror="this.outerHTML='<span class=&quot;photo-card missing&quot;>PROVA 01<br>PENDENTE</span>'">
+            <img class="photo-card" src="${r.images[1]}" alt="Prova 02 de ${r.title}" onerror="this.outerHTML='<span class=&quot;photo-card missing&quot;>PROVA 02<br>PENDENTE</span>'">
+          </button>
+          <div class="photo-controls">
+            <label class="found-control" for="chk-${current}-${id}" title="Marcar como encontrado">
+              <input type="checkbox" class="check" data-id="${id}" id="chk-${current}-${id}" ${done ? 'checked' : ''} aria-label="Marcar ${r.title} como encontrado">
+            </label>
+            <button type="button" class="dossier-open" data-open-photo="${id}" aria-label="Abrir dossiê fotográfico de ${r.title}">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 5.5h6l1.7 2H18v9H2z"/><path d="M2 5.5V3.8h5.8l1.7 1.7M6.5 11h7"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </li>`;
+  }).join('');
+}
+function renderAll() {
+  renderSummary(); renderTabs(); renderList();
+  document.getElementById('hideDone').setAttribute('aria-pressed', String(hideDone));
+}
+
+document.getElementById('tabs').addEventListener('click', e => {
+  const b = e.target.closest('.tab');
+  if (b) location.hash = b.dataset.j;
+});
+window.addEventListener('hashchange', () => { route(); closeConfirm(); justId = null; renderAll(); });
+
+document.getElementById('list').addEventListener('change', e => {
+  const c = e.target.closest('.check');
+  if (!c) return;
+  if (c.checked) { state[c.dataset.id] = true; justId = c.dataset.id; }
+  else { delete state[c.dataset.id]; justId = null; }
+  save();
+  renderAll();
+});
+
+document.getElementById('hideDone').addEventListener('click', () => {
+  hideDone = !hideDone;
+  justId = null;
+  try { localStorage.setItem(STORE_KEY + '-hide', hideDone ? '1' : '0'); } catch (e) {}
+  renderAll();
+});
+
+const resetBtn = document.getElementById('resetBtn');
+const confirmBox = document.getElementById('confirm');
+function closeConfirm() { confirmBox.hidden = true; resetBtn.hidden = false; }
+resetBtn.addEventListener('click', () => { resetBtn.hidden = true; confirmBox.hidden = false; });
+document.getElementById('confirmNo').addEventListener('click', closeConfirm);
+document.getElementById('confirmYes').addEventListener('click', () => {
+  state = {}; save(); justId = null; closeConfirm(); renderAll();
+});
+
+
+/* Dossier viewer: simple proof tabs, with no oversized navigation controls. */
+const viewer = document.getElementById('viewer');
+const viewerImage = document.getElementById('viewerImage');
+const viewerPlaceholder = document.getElementById('viewerPlaceholder');
+let viewerId = null;
+let viewerIndex = 0;
+function showViewerImage() {
+  const item = RACCOONS[viewerId];
+  viewerPlaceholder.classList.remove('show');
+  viewerImage.style.display = 'block';
+  viewerImage.onload = () => { viewerImage.style.display = 'block'; viewerPlaceholder.classList.remove('show'); };
+  viewerImage.onerror = () => { viewerImage.style.display = 'none'; viewerPlaceholder.classList.add('show'); };
+  viewerImage.src = item.images[viewerIndex];
+  document.getElementById('viewerTitle').textContent = item.title;
+  document.getElementById('viewerDetail').textContent = item.dossier || item.desc;
+  document.getElementById('viewerAccess').textContent = item.req ? `Acesso / requisito: ${item.req}` : '';
+  document.getElementById('viewerCaption').textContent = `${AREAS[item.area]} · Registro ${String(ALL_IDS.indexOf(viewerId)+1).padStart(2,'0')} / ${TOTAL}`;
+  document.getElementById('proofOne').setAttribute('aria-selected', String(viewerIndex === 0));
+  document.getElementById('proofTwo').setAttribute('aria-selected', String(viewerIndex === 1));
+}
+function openViewer(id, index=0) {
+  viewerId=id; viewerIndex=index; showViewerImage(); viewer.hidden=false;
+  document.body.style.overflow='hidden'; document.getElementById('viewerClose').focus();
+}
+function closeViewer() { viewer.hidden=true; document.body.style.overflow=''; viewerId=null; }
+document.getElementById('list').addEventListener('click', e => {
+  const stack=e.target.closest('.photo-stack');
+  if(stack){ stack.dataset.front=stack.dataset.front==='0'?'1':'0'; return; }
+  const dossier=e.target.closest('[data-open-photo]');
+  if(dossier){ const stackButton=dossier.parentElement.parentElement.querySelector('.photo-stack'); openViewer(dossier.dataset.openPhoto,Number(stackButton?.dataset.front||0)); }
+});
+document.getElementById('proofOne').addEventListener('click',()=>{if(viewerId){viewerIndex=0;showViewerImage();}});
+document.getElementById('proofTwo').addEventListener('click',()=>{if(viewerId){viewerIndex=1;showViewerImage();}});
+document.getElementById('viewerClose').addEventListener('click',closeViewer);
+viewer.addEventListener('click',e=>{if(e.target===viewer)closeViewer();});
+document.addEventListener('keydown',e=>{if(viewer.hidden)return;if(e.key==='Escape')closeViewer();if(e.key==='ArrowLeft'){viewerIndex=0;showViewerImage();}if(e.key==='ArrowRight'){viewerIndex=1;showViewerImage();}});
+
+load();
+route();
+renderAll();
+</script>
+
+</html>
